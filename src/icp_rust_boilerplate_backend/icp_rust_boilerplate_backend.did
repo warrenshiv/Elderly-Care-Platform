@@ -1,0 +1,109 @@
+type AdoptionRequest = record {
+  id : nat64;
+  status : AdoptionStatus;
+  adopter_id : nat64;
+  pet_id : nat64;
+  approved_at : opt nat64;
+  requested_at : nat64;
+};
+type AdoptionRequestPayload = record {
+  status : AdoptionStatus;
+  adopter_id : nat64;
+  pet_id : nat64;
+};
+type AdoptionStatus = variant { Approved; Rejected; Pending };
+type Donation = record {
+  id : nat64;
+  created_at : nat64;
+  donor_id : nat64;
+  amount : nat32;
+};
+type DonationPayload = record { donor_id : nat64; amount : nat32 };
+type Feedback = record {
+  id : nat64;
+  pet_id : opt nat64;
+  feedback : text;
+  created_at : nat64;
+  user_id : nat64;
+  rating : nat8;
+  event_id : opt nat64;
+};
+type FeedbackPayload = record {
+  pet_id : opt nat64;
+  feedback : text;
+  user_id : nat64;
+  rating : nat8;
+  event_id : opt nat64;
+};
+type Pet = record {
+  id : nat64;
+  age : nat32;
+  status : PetStatus;
+  name : text;
+  description : text;
+  created_at : nat64;
+  owner_id : nat64;
+  breed : text;
+  species : text;
+};
+type PetCareEvent = record {
+  id : nat64;
+  organizer_id : nat64;
+  title : text;
+  date_time : nat64;
+  description : text;
+  created_at : nat64;
+  location : text;
+};
+type PetCareEventPayload = record {
+  organizer_id : nat64;
+  title : text;
+  date_time : nat64;
+  description : text;
+  location : text;
+};
+type PetPayload = record {
+  age : nat32;
+  status : PetStatus;
+  name : text;
+  description : text;
+  owner_id : nat64;
+  breed : text;
+  species : text;
+};
+type PetStatus = variant { Available; Adopted };
+type Result = variant { Ok : AdoptionRequest; Err : text };
+type Result_1 = variant { Ok : Donation; Err : text };
+type Result_10 = variant { Ok : vec Pet; Err : text };
+type Result_11 = variant { Ok : vec User; Err : text };
+type Result_2 = variant { Ok : Feedback; Err : text };
+type Result_3 = variant { Ok : Pet; Err : text };
+type Result_4 = variant { Ok : PetCareEvent; Err : text };
+type Result_5 = variant { Ok : User; Err : text };
+type Result_6 = variant { Ok : vec AdoptionRequest; Err : text };
+type Result_7 = variant { Ok : vec Donation; Err : text };
+type Result_8 = variant { Ok : vec Feedback; Err : text };
+type Result_9 = variant { Ok : vec PetCareEvent; Err : text };
+type User = record {
+  id : nat64;
+  user_type : UserType;
+  contact : text;
+  name : text;
+  created_at : nat64;
+};
+type UserPayload = record { user_type : UserType; contact : text; name : text };
+type UserType = variant { Shelter; Adopter; Owner };
+service : {
+  create_adoption_request : (AdoptionRequestPayload) -> (Result);
+  create_donation : (DonationPayload) -> (Result_1);
+  create_feedback : (FeedbackPayload) -> (Result_2);
+  create_pet : (PetPayload) -> (Result_3);
+  create_pet_care_event : (PetCareEventPayload) -> (Result_4);
+  create_user : (UserPayload) -> (Result_5);
+  get_all_adoption_requests : () -> (Result_6) query;
+  get_all_donations : () -> (Result_7) query;
+  get_all_feedback : () -> (Result_8) query;
+  get_all_pet_care_events : () -> (Result_9) query;
+  get_all_pets : () -> (Result_10) query;
+  get_all_users : () -> (Result_11) query;
+}
