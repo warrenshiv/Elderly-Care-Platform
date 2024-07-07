@@ -15,30 +15,19 @@ type IdCell = Cell<u64, Memory>;
 )]
 enum UserType {
     #[default]
-    Owner,
-    Shelter,
-    Adopter,
+    Elderly,
+    Caregiver,
+    HealthcareProvider,
 }
 
-// PetStatus enum
+// HealthStatus enum
 #[derive(
     candid::CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Default, Debug,
 )]
-enum PetStatus {
+enum HealthStatus {
     #[default]
-    Available,
-    Adopted,
-}
-
-// AdoptionStatus enum
-#[derive(
-    candid::CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Default, Debug,
-)]
-enum AdoptionStatus {
-    #[default]
-    Pending,
-    Approved,
-    Rejected,
+    Stable,
+    Critical,
 }
 
 // User struct
@@ -51,61 +40,37 @@ struct User {
     created_at: u64,
 }
 
-// Pet struct
+// HealthRecord struct
 #[derive(candid::CandidType, Clone, Serialize, Deserialize, Default)]
-struct Pet {
-    id: u64,
-    owner_id: u64,
-    name: String,
-    species: String,
-    breed: String,
-    age: u32,
-    description: String,
-    status: PetStatus,
-    created_at: u64,
-}
-
-// AdoptionRequest struct
-#[derive(candid::CandidType, Clone, Serialize, Deserialize, Default)]
-struct AdoptionRequest {
-    id: u64,
-    pet_id: u64,
-    adopter_id: u64,
-    status: AdoptionStatus,
-    requested_at: u64,
-    approved_at: Option<u64>,
-}
-
-// PetCareEvent struct
-#[derive(candid::CandidType, Clone, Serialize, Deserialize, Default)]
-struct PetCareEvent {
-    id: u64,
-    title: String,
-    description: String,
-    date_time: u64,
-    location: String,
-    organizer_id: u64,
-    created_at: u64,
-}
-
-// Feedback struct
-#[derive(candid::CandidType, Clone, Serialize, Deserialize, Default)]
-struct Feedback {
+struct HealthRecord {
     id: u64,
     user_id: u64,
-    pet_id: Option<u64>,
-    event_id: Option<u64>,
-    feedback: String,
-    rating: u8,
+    heart_rate: u8,
+    blood_pressure: String,
+    activity_level: String,
+    status: HealthStatus,
+    recorded_at: u64,
+}
+
+// MedicationReminder struct
+#[derive(candid::CandidType, Clone, Serialize, Deserialize, Default)]
+struct MedicationReminder {
+    id: u64,
+    user_id: u64,
+    medication_name: String,
+    dosage: String,
+    schedule: String,
     created_at: u64,
 }
 
-// Donation struct
+// VirtualConsultation struct
 #[derive(candid::CandidType, Clone, Serialize, Deserialize, Default)]
-struct Donation {
+struct VirtualConsultation {
     id: u64,
-    donor_id: u64,
-    amount: u32,
+    user_id: u64,
+    provider_id: u64,
+    scheduled_at: u64,
+    status: String,
     created_at: u64,
 }
 
@@ -124,7 +89,7 @@ impl BoundedStorable for User {
     const IS_FIXED_SIZE: bool = false;
 }
 
-impl Storable for Pet {
+impl Storable for HealthRecord {
     fn to_bytes(&self) -> Cow<[u8]> {
         Cow::Owned(Encode!(self).unwrap())
     }
@@ -134,12 +99,12 @@ impl Storable for Pet {
     }
 }
 
-impl BoundedStorable for Pet {
-    const MAX_SIZE: u32 = 1024;
+impl BoundedStorable for HealthRecord {
+    const MAX_SIZE: u32 = 512;
     const IS_FIXED_SIZE: bool = false;
 }
 
-impl Storable for AdoptionRequest {
+impl Storable for MedicationReminder {
     fn to_bytes(&self) -> Cow<[u8]> {
         Cow::Owned(Encode!(self).unwrap())
     }
@@ -149,12 +114,12 @@ impl Storable for AdoptionRequest {
     }
 }
 
-impl BoundedStorable for AdoptionRequest {
-    const MAX_SIZE: u32 = 1024;
+impl BoundedStorable for MedicationReminder {
+    const MAX_SIZE: u32 = 512;
     const IS_FIXED_SIZE: bool = false;
 }
 
-impl Storable for PetCareEvent {
+impl Storable for VirtualConsultation {
     fn to_bytes(&self) -> Cow<[u8]> {
         Cow::Owned(Encode!(self).unwrap())
     }
@@ -164,37 +129,7 @@ impl Storable for PetCareEvent {
     }
 }
 
-impl BoundedStorable for PetCareEvent {
-    const MAX_SIZE: u32 = 1024;
-    const IS_FIXED_SIZE: bool = false;
-}
-
-impl Storable for Feedback {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        Decode!(bytes.as_ref(), Self).unwrap()
-    }
-}
-
-impl BoundedStorable for Feedback {
-    const MAX_SIZE: u32 = 1024;
-    const IS_FIXED_SIZE: bool = false;
-}
-
-impl Storable for Donation {
-    fn to_bytes(&self) -> Cow<[u8]> {
-        Cow::Owned(Encode!(self).unwrap())
-    }
-
-    fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        Decode!(bytes.as_ref(), Self).unwrap()
-    }
-}
-
-impl BoundedStorable for Donation {
+impl BoundedStorable for VirtualConsultation {
     const MAX_SIZE: u32 = 512;
     const IS_FIXED_SIZE: bool = false;
 }
@@ -214,29 +149,19 @@ thread_local! {
             MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(1)))
     ));
 
-    static PETS_STORAGE: RefCell<StableBTreeMap<u64, Pet, Memory>> =
+    static HEALTH_RECORDS_STORAGE: RefCell<StableBTreeMap<u64, HealthRecord, Memory>> =
         RefCell::new(StableBTreeMap::init(
             MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(2)))
     ));
 
-    static ADOPTION_REQUESTS_STORAGE: RefCell<StableBTreeMap<u64, AdoptionRequest, Memory>> =
+    static MEDICATION_REMINDERS_STORAGE: RefCell<StableBTreeMap<u64, MedicationReminder, Memory>> =
         RefCell::new(StableBTreeMap::init(
             MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(3)))
     ));
 
-    static PET_CARE_EVENTS_STORAGE: RefCell<StableBTreeMap<u64, PetCareEvent, Memory>> =
+    static VIRTUAL_CONSULTATIONS_STORAGE: RefCell<StableBTreeMap<u64, VirtualConsultation, Memory>> =
         RefCell::new(StableBTreeMap::init(
             MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(4)))
-    ));
-
-    static FEEDBACKS_STORAGE: RefCell<StableBTreeMap<u64, Feedback, Memory>> =
-        RefCell::new(StableBTreeMap::init(
-            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(5)))
-    ));
-
-    static DONATIONS_STORAGE: RefCell<StableBTreeMap<u64, Donation, Memory>> =
-        RefCell::new(StableBTreeMap::init(
-            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(6)))
     ));
 }
 
@@ -248,56 +173,38 @@ struct UserPayload {
     user_type: UserType,
 }
 
-// Pet Payload
+// HealthRecord Payload
 #[derive(candid::CandidType, Deserialize, Serialize)]
-struct PetPayload {
-    owner_id: u64,
-    name: String,
-    species: String,
-    breed: String,
-    age: u32,
-    description: String,
-    status: PetStatus,
-}
-
-// AdoptionRequest Payload
-#[derive(candid::CandidType, Deserialize, Serialize)]
-struct AdoptionRequestPayload {
-    pet_id: u64,
-    adopter_id: u64,
-    status: AdoptionStatus,
-}
-
-// PetCareEvent Payload
-#[derive(candid::CandidType, Deserialize, Serialize)]
-struct PetCareEventPayload {
-    title: String,
-    description: String,
-    date_time: u64,
-    location: String,
-    organizer_id: u64,
-}
-
-// Feedback Payload
-#[derive(candid::CandidType, Deserialize, Serialize)]
-struct FeedbackPayload {
+struct HealthRecordPayload {
     user_id: u64,
-    pet_id: Option<u64>,
-    event_id: Option<u64>,
-    feedback: String,
-    rating: u8,
+    heart_rate: u8,
+    blood_pressure: String,
+    activity_level: String,
+    status: HealthStatus,
 }
 
-// Donation Payload
+// MedicationReminder Payload
 #[derive(candid::CandidType, Deserialize, Serialize)]
-struct DonationPayload {
-    donor_id: u64,
-    amount: u32,
+struct MedicationReminderPayload {
+    user_id: u64,
+    medication_name: String,
+    dosage: String,
+    schedule: String,
+}
+
+// VirtualConsultation Payload
+#[derive(candid::CandidType, Deserialize, Serialize)]
+struct VirtualConsultationPayload {
+    user_id: u64,
+    provider_id: u64,
+    scheduled_at: u64,
+    status: String,
 }
 
 // Function to create a new user
 #[ic_cdk::update]
 fn create_user(payload: UserPayload) -> Result<User, String> {
+    // Ensure name and contact are not empty
     if payload.name.is_empty() || payload.contact.is_empty() {
         return Err("Name and contact cannot be empty".to_string());
     }
@@ -338,202 +245,20 @@ fn get_all_users() -> Result<Vec<User>, String> {
     })
 }
 
-// Function to create a new pet
+// Function to create a new health record
 #[ic_cdk::update]
-fn create_pet(payload: PetPayload) -> Result<Pet, String> {
-    if payload.owner_id == 0
-        || payload.name.is_empty()
-        || payload.species.is_empty()
-        || payload.breed.is_empty()
-        || payload.description.is_empty()
-    {
+fn create_health_record(payload: HealthRecordPayload) -> Result<HealthRecord, String> {
+    // Ensure all fields are provided
+    if payload.blood_pressure.is_empty() || payload.activity_level.is_empty() {
         return Err("All fields must be provided.".to_string());
     }
 
-    let owner_exists =
-        USERS_STORAGE.with(|storage| storage.borrow().contains_key(&payload.owner_id));
-    if !owner_exists {
-        return Err("Owner ID does not exist.".to_string());
-    }
-
-    let id = ID_COUNTER
-        .with(|counter| {
-            let current_value = *counter.borrow().get();
-            counter.borrow_mut().set(current_value + 1)
-        })
-        .expect("Cannot increment ID counter");
-
-    let pet = Pet {
-        id,
-        owner_id: payload.owner_id,
-        name: payload.name,
-        species: payload.species,
-        breed: payload.breed,
-        age: payload.age,
-        description: payload.description,
-        status: payload.status,
-        created_at: time(),
-    };
-
-    PETS_STORAGE.with(|storage| storage.borrow_mut().insert(id, pet.clone()));
-    Ok(pet)
-}
-
-// Function to retrieve all pets
-#[ic_cdk::query]
-fn get_all_pets() -> Result<Vec<Pet>, String> {
-    PETS_STORAGE.with(|storage| {
-        let stable_btree_map = &*storage.borrow();
-        let records: Vec<Pet> = stable_btree_map
-            .iter()
-            .map(|(_, record)| record.clone())
-            .collect();
-        if records.is_empty() {
-            Err("No pets found.".to_string())
-        } else {
-            Ok(records)
-        }
-    })
-}
-
-// Function to create a new adoption request
-#[ic_cdk::update]
-fn create_adoption_request(payload: AdoptionRequestPayload) -> Result<AdoptionRequest, String> {
-    if payload.pet_id == 0 || payload.adopter_id == 0 {
-        return Err("Pet ID and Adopter ID must be provided.".to_string());
-    }
-
-    let pet_exists = PETS_STORAGE.with(|storage| storage.borrow().contains_key(&payload.pet_id));
-    if !pet_exists {
-        return Err("Pet ID does not exist.".to_string());
-    }
-
-    let adopter_exists =
-        USERS_STORAGE.with(|storage| storage.borrow().contains_key(&payload.adopter_id));
-    if !adopter_exists {
-        return Err("Adopter ID does not exist.".to_string());
-    }
-
-    let id = ID_COUNTER
-        .with(|counter| {
-            let current_value = *counter.borrow().get();
-            counter.borrow_mut().set(current_value + 1)
-        })
-        .expect("Cannot increment ID counter");
-
-    let adoption_request = AdoptionRequest {
-        id,
-        pet_id: payload.pet_id,
-        adopter_id: payload.adopter_id,
-        status: payload.status,
-        requested_at: time(),
-        approved_at: None,
-    };
-
-    ADOPTION_REQUESTS_STORAGE
-        .with(|storage| storage.borrow_mut().insert(id, adoption_request.clone()));
-    Ok(adoption_request)
-}
-
-// Function to retrieve all adoption requests
-#[ic_cdk::query]
-fn get_all_adoption_requests() -> Result<Vec<AdoptionRequest>, String> {
-    ADOPTION_REQUESTS_STORAGE.with(|storage| {
-        let stable_btree_map = &*storage.borrow();
-        let records: Vec<AdoptionRequest> = stable_btree_map
-            .iter()
-            .map(|(_, record)| record.clone())
-            .collect();
-        if records.is_empty() {
-            Err("No adoption requests found.".to_string())
-        } else {
-            Ok(records)
-        }
-    })
-}
-
-// Function to create a new pet care event
-#[ic_cdk::update]
-fn create_pet_care_event(payload: PetCareEventPayload) -> Result<PetCareEvent, String> {
-    if payload.title.is_empty()
-        || payload.description.is_empty()
-        || payload.location.is_empty()
-        || payload.organizer_id == 0
-    {
-        return Err("All fields must be provided.".to_string());
-    }
-
-    let organizer_exists =
-        USERS_STORAGE.with(|storage| storage.borrow().contains_key(&payload.organizer_id));
-    if !organizer_exists {
-        return Err("Organizer ID does not exist.".to_string());
-    }
-
-    let id = ID_COUNTER
-        .with(|counter| {
-            let current_value = *counter.borrow().get();
-            counter.borrow_mut().set(current_value + 1)
-        })
-        .expect("Cannot increment ID counter");
-
-    let pet_care_event = PetCareEvent {
-        id,
-        title: payload.title,
-        description: payload.description,
-        date_time: payload.date_time,
-        location: payload.location,
-        organizer_id: payload.organizer_id,
-        created_at: time(),
-    };
-
-    PET_CARE_EVENTS_STORAGE.with(|storage| storage.borrow_mut().insert(id, pet_care_event.clone()));
-    Ok(pet_care_event)
-}
-
-// Function to retrieve all pet care events
-#[ic_cdk::query]
-fn get_all_pet_care_events() -> Result<Vec<PetCareEvent>, String> {
-    PET_CARE_EVENTS_STORAGE.with(|storage| {
-        let stable_btree_map = &*storage.borrow();
-        let records: Vec<PetCareEvent> = stable_btree_map
-            .iter()
-            .map(|(_, record)| record.clone())
-            .collect();
-        if records.is_empty() {
-            Err("No pet care events found.".to_string())
-        } else {
-            Ok(records)
-        }
-    })
-}
-
-// Function to create a new feedback
-#[ic_cdk::update]
-fn create_feedback(payload: FeedbackPayload) -> Result<Feedback, String> {
-    if payload.user_id == 0 || payload.feedback.is_empty() || payload.rating == 0 {
-        return Err("User ID, feedback, and rating must be provided.".to_string());
-    }
-
+    // Ensure user ID exists
     let user_exists = USERS_STORAGE.with(|storage| storage.borrow().contains_key(&payload.user_id));
     if !user_exists {
         return Err("User ID does not exist.".to_string());
     }
 
-    if let Some(ref pid) = payload.pet_id {
-        let pet_exists = PETS_STORAGE.with(|storage| storage.borrow().contains_key(pid));
-        if !pet_exists {
-            return Err("Pet ID does not exist.".to_string());
-        }
-    }
-
-    if let Some(ref eid) = payload.event_id {
-        let event_exists =
-            PET_CARE_EVENTS_STORAGE.with(|storage| storage.borrow().contains_key(eid));
-        if !event_exists {
-            return Err("Event ID does not exist.".to_string());
-        }
-    }
-
     let id = ID_COUNTER
         .with(|counter| {
             let current_value = *counter.borrow().get();
@@ -541,48 +266,54 @@ fn create_feedback(payload: FeedbackPayload) -> Result<Feedback, String> {
         })
         .expect("Cannot increment ID counter");
 
-    let feedback = Feedback {
+    let health_record = HealthRecord {
         id,
         user_id: payload.user_id,
-        pet_id: payload.pet_id,
-        event_id: payload.event_id,
-        feedback: payload.feedback,
-        rating: payload.rating,
-        created_at: time(),
+        heart_rate: payload.heart_rate,
+        blood_pressure: payload.blood_pressure,
+        activity_level: payload.activity_level,
+        status: payload.status,
+        recorded_at: time(),
     };
 
-    FEEDBACKS_STORAGE.with(|storage| storage.borrow_mut().insert(id, feedback.clone()));
-    Ok(feedback)
+    HEALTH_RECORDS_STORAGE.with(|storage| storage.borrow_mut().insert(id, health_record.clone()));
+    Ok(health_record)
 }
 
-// Function to retrieve all feedback
+// Function to retrieve all health records
 #[ic_cdk::query]
-fn get_all_feedback() -> Result<Vec<Feedback>, String> {
-    FEEDBACKS_STORAGE.with(|storage| {
+fn get_all_health_records() -> Result<Vec<HealthRecord>, String> {
+    HEALTH_RECORDS_STORAGE.with(|storage| {
         let stable_btree_map = &*storage.borrow();
-        let records: Vec<Feedback> = stable_btree_map
+        let records: Vec<HealthRecord> = stable_btree_map
             .iter()
             .map(|(_, record)| record.clone())
             .collect();
         if records.is_empty() {
-            Err("No feedback found.".to_string())
+            Err("No health records found.".to_string())
         } else {
             Ok(records)
         }
     })
 }
 
-// Function to create a new donation
+// Function to create a new medication reminder
 #[ic_cdk::update]
-fn create_donation(payload: DonationPayload) -> Result<Donation, String> {
-    if payload.donor_id == 0 || payload.amount == 0 {
-        return Err("Donor ID and amount must be provided.".to_string());
+fn create_medication_reminder(
+    payload: MedicationReminderPayload,
+) -> Result<MedicationReminder, String> {
+    // Ensure all fields are provided
+    if payload.medication_name.is_empty()
+        || payload.dosage.is_empty()
+        || payload.schedule.is_empty()
+    {
+        return Err("All fields must be provided.".to_string());
     }
-
-    let donor_exists =
-        USERS_STORAGE.with(|storage| storage.borrow().contains_key(&payload.donor_id));
-    if !donor_exists {
-        return Err("Donor ID does not exist.".to_string());
+    
+    // Ensure user ID exists
+    let user_exists = USERS_STORAGE.with(|storage| storage.borrow().contains_key(&payload.user_id));
+    if !user_exists {
+        return Err("User ID does not exist.".to_string());
     }
 
     let id = ID_COUNTER
@@ -592,28 +323,94 @@ fn create_donation(payload: DonationPayload) -> Result<Donation, String> {
         })
         .expect("Cannot increment ID counter");
 
-    let donation = Donation {
+    let medication_reminder = MedicationReminder {
         id,
-        donor_id: payload.donor_id,
-        amount: payload.amount,
+        user_id: payload.user_id,
+        medication_name: payload.medication_name,
+        dosage: payload.dosage,
+        schedule: payload.schedule,
         created_at: time(),
     };
 
-    DONATIONS_STORAGE.with(|storage| storage.borrow_mut().insert(id, donation.clone()));
-    Ok(donation)
+    MEDICATION_REMINDERS_STORAGE
+        .with(|storage| storage.borrow_mut().insert(id, medication_reminder.clone()));
+    Ok(medication_reminder)
 }
 
-// Function to retrieve all donations
+// Function to retrieve all medication reminders
 #[ic_cdk::query]
-fn get_all_donations() -> Result<Vec<Donation>, String> {
-    DONATIONS_STORAGE.with(|storage| {
+fn get_all_medication_reminders() -> Result<Vec<MedicationReminder>, String> {
+    MEDICATION_REMINDERS_STORAGE.with(|storage| {
         let stable_btree_map = &*storage.borrow();
-        let records: Vec<Donation> = stable_btree_map
+        let records: Vec<MedicationReminder> = stable_btree_map
             .iter()
             .map(|(_, record)| record.clone())
             .collect();
         if records.is_empty() {
-            Err("No donations found.".to_string())
+            Err("No medication reminders found.".to_string())
+        } else {
+            Ok(records)
+        }
+    })
+}
+
+// Function to create a new virtual consultation
+#[ic_cdk::update]
+fn create_virtual_consultation(
+    payload: VirtualConsultationPayload,
+) -> Result<VirtualConsultation, String> {
+    // Ensure all fields are provided
+    if payload.user_id == 0 || payload.provider_id == 0 || payload.status.is_empty() {
+        return Err("All fields must be provided.".to_string());
+    }
+    
+    // Ensure user ID and provider ID exist
+    let user_exists = USERS_STORAGE.with(|storage| storage.borrow().contains_key(&payload.user_id));
+    if !user_exists {
+        return Err("User ID does not exist.".to_string());
+    }
+
+    let provider_exists =
+        USERS_STORAGE.with(|storage| storage.borrow().contains_key(&payload.provider_id));
+    if !provider_exists {
+        return Err("Provider ID does not exist.".to_string());
+    }
+
+    let id = ID_COUNTER
+        .with(|counter| {
+            let current_value = *counter.borrow().get();
+            counter.borrow_mut().set(current_value + 1)
+        })
+        .expect("Cannot increment ID counter");
+
+    let virtual_consultation = VirtualConsultation {
+        id,
+        user_id: payload.user_id,
+        provider_id: payload.provider_id,
+        scheduled_at: payload.scheduled_at,
+        status: payload.status,
+        created_at: time(),
+    };
+
+    VIRTUAL_CONSULTATIONS_STORAGE.with(|storage| {
+        storage
+            .borrow_mut()
+            .insert(id, virtual_consultation.clone())
+    });
+    Ok(virtual_consultation)
+}
+
+// Function to retrieve all virtual consultations
+#[ic_cdk::query]
+fn get_all_virtual_consultations() -> Result<Vec<VirtualConsultation>, String> {
+    VIRTUAL_CONSULTATIONS_STORAGE.with(|storage| {
+        let stable_btree_map = &*storage.borrow();
+        let records: Vec<VirtualConsultation> = stable_btree_map
+            .iter()
+            .map(|(_, record)| record.clone())
+            .collect();
+        if records.is_empty() {
+            Err("No virtual consultations found.".to_string())
         } else {
             Ok(records)
         }

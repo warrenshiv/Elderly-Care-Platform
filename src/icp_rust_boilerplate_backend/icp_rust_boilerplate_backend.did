@@ -1,89 +1,42 @@
-type AdoptionRequest = record {
+type HealthRecord = record {
   id : nat64;
-  status : AdoptionStatus;
-  adopter_id : nat64;
-  pet_id : nat64;
-  approved_at : opt nat64;
-  requested_at : nat64;
+  status : HealthStatus;
+  blood_pressure : text;
+  user_id : nat64;
+  recorded_at : nat64;
+  activity_level : text;
+  heart_rate : nat8;
 };
-type AdoptionRequestPayload = record {
-  status : AdoptionStatus;
-  adopter_id : nat64;
-  pet_id : nat64;
+type HealthRecordPayload = record {
+  status : HealthStatus;
+  blood_pressure : text;
+  user_id : nat64;
+  activity_level : text;
+  heart_rate : nat8;
 };
-type AdoptionStatus = variant { Approved; Rejected; Pending };
-type Donation = record {
+type HealthStatus = variant { Stable; Critical };
+type MedicationReminder = record {
   id : nat64;
-  created_at : nat64;
-  donor_id : nat64;
-  amount : nat32;
-};
-type DonationPayload = record { donor_id : nat64; amount : nat32 };
-type Feedback = record {
-  id : nat64;
-  pet_id : opt nat64;
-  feedback : text;
+  medication_name : text;
+  dosage : text;
   created_at : nat64;
   user_id : nat64;
-  rating : nat8;
-  event_id : opt nat64;
+  schedule : text;
 };
-type FeedbackPayload = record {
-  pet_id : opt nat64;
-  feedback : text;
+type MedicationReminderPayload = record {
+  medication_name : text;
+  dosage : text;
   user_id : nat64;
-  rating : nat8;
-  event_id : opt nat64;
+  schedule : text;
 };
-type Pet = record {
-  id : nat64;
-  age : nat32;
-  status : PetStatus;
-  name : text;
-  description : text;
-  created_at : nat64;
-  owner_id : nat64;
-  breed : text;
-  species : text;
-};
-type PetCareEvent = record {
-  id : nat64;
-  organizer_id : nat64;
-  title : text;
-  date_time : nat64;
-  description : text;
-  created_at : nat64;
-  location : text;
-};
-type PetCareEventPayload = record {
-  organizer_id : nat64;
-  title : text;
-  date_time : nat64;
-  description : text;
-  location : text;
-};
-type PetPayload = record {
-  age : nat32;
-  status : PetStatus;
-  name : text;
-  description : text;
-  owner_id : nat64;
-  breed : text;
-  species : text;
-};
-type PetStatus = variant { Available; Adopted };
-type Result = variant { Ok : AdoptionRequest; Err : text };
-type Result_1 = variant { Ok : Donation; Err : text };
-type Result_10 = variant { Ok : vec Pet; Err : text };
-type Result_11 = variant { Ok : vec User; Err : text };
-type Result_2 = variant { Ok : Feedback; Err : text };
-type Result_3 = variant { Ok : Pet; Err : text };
-type Result_4 = variant { Ok : PetCareEvent; Err : text };
-type Result_5 = variant { Ok : User; Err : text };
-type Result_6 = variant { Ok : vec AdoptionRequest; Err : text };
-type Result_7 = variant { Ok : vec Donation; Err : text };
-type Result_8 = variant { Ok : vec Feedback; Err : text };
-type Result_9 = variant { Ok : vec PetCareEvent; Err : text };
+type Result = variant { Ok : HealthRecord; Err : text };
+type Result_1 = variant { Ok : MedicationReminder; Err : text };
+type Result_2 = variant { Ok : User; Err : text };
+type Result_3 = variant { Ok : VirtualConsultation; Err : text };
+type Result_4 = variant { Ok : vec HealthRecord; Err : text };
+type Result_5 = variant { Ok : vec MedicationReminder; Err : text };
+type Result_6 = variant { Ok : vec User; Err : text };
+type Result_7 = variant { Ok : vec VirtualConsultation; Err : text };
 type User = record {
   id : nat64;
   user_type : UserType;
@@ -92,18 +45,28 @@ type User = record {
   created_at : nat64;
 };
 type UserPayload = record { user_type : UserType; contact : text; name : text };
-type UserType = variant { Shelter; Adopter; Owner };
+type UserType = variant { Elderly; Caregiver; HealthcareProvider };
+type VirtualConsultation = record {
+  id : nat64;
+  status : text;
+  provider_id : nat64;
+  created_at : nat64;
+  user_id : nat64;
+  scheduled_at : nat64;
+};
+type VirtualConsultationPayload = record {
+  status : text;
+  provider_id : nat64;
+  user_id : nat64;
+  scheduled_at : nat64;
+};
 service : {
-  create_adoption_request : (AdoptionRequestPayload) -> (Result);
-  create_donation : (DonationPayload) -> (Result_1);
-  create_feedback : (FeedbackPayload) -> (Result_2);
-  create_pet : (PetPayload) -> (Result_3);
-  create_pet_care_event : (PetCareEventPayload) -> (Result_4);
-  create_user : (UserPayload) -> (Result_5);
-  get_all_adoption_requests : () -> (Result_6) query;
-  get_all_donations : () -> (Result_7) query;
-  get_all_feedback : () -> (Result_8) query;
-  get_all_pet_care_events : () -> (Result_9) query;
-  get_all_pets : () -> (Result_10) query;
-  get_all_users : () -> (Result_11) query;
+  create_health_record : (HealthRecordPayload) -> (Result);
+  create_medication_reminder : (MedicationReminderPayload) -> (Result_1);
+  create_user : (UserPayload) -> (Result_2);
+  create_virtual_consultation : (VirtualConsultationPayload) -> (Result_3);
+  get_all_health_records : () -> (Result_4) query;
+  get_all_medication_reminders : () -> (Result_5) query;
+  get_all_users : () -> (Result_6) query;
+  get_all_virtual_consultations : () -> (Result_7) query;
 }

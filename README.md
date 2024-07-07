@@ -1,32 +1,24 @@
-# Decentralized Pet Care and Adoption Management System
+# Decentralized Elderly Care and Health Management System
 
-This project is a decentralized platform built on the Internet Computer for managing pet care, adoptions and pet events. It allows users to register as pet owners, shelters, or adopters and manage pets, adoption requests, pet care events, feedback, and donations. The platform ensures robust access control and user management.
+This project is a decentralized platform built on the Internet Computer for managing elderly care and health records. It allows users to register as elderly individuals, caregivers, or healthcare providers and manage user profiles, health records, medication reminders, and virtual consultations. The platform ensures robust access control and user management.
 
 ## Key Features
 
 1. **User Management**
-   - **Add User:** Allows users to create profiles as Owners, Shelters, or Adopters.
+   - **Add User:** Allows users to create profiles as Elderly, Caregivers, or Healthcare Providers.
    - **Get All Users:** Retrieve a list of all user profiles.
 
-2. **Pet Management**
-   - **Add Pet:** Allows users to add pets to the system.
-   - **Get All Pets:** Retrieve a list of all pets available in the system.
+2. **Health Record Management**
+   - **Add Health Record:** Allows users to add health records to the system.
+   - **Get All Health Records:** Retrieve a list of all health records available in the system.
 
-3. **Adoption Request Management**
-   - **Create Adoption Request:** Allows adopters to request the adoption of a pet.
-   - **Get All Adoption Requests:** Retrieve a list of all adoption requests.
+3. **Medication Reminder Management**
+   - **Create Medication Reminder:** Allows users to create medication reminders.
+   - **Get All Medication Reminders:** Retrieve a list of all medication reminders.
 
-4. **Pet Care Event Management**
-   - **Create Pet Care Event:** Allows organizers to create pet care events.
-   - **Get All Pet Care Events:** Retrieve a list of all pet care events.
-
-5. **Feedback Management**
-   - **Create Feedback:** Allows users to provide feedback on pets or events.
-   - **Get All Feedback:** Retrieve a list of all feedback entries.
-
-6. **Donation Management**
-   - **Create Donation:** Allows users to make donations to the system.
-   - **Get All Donations:** Retrieve a list of all donations.
+4. **Virtual Consultation Management**
+   - **Create Virtual Consultation:** Allows users to schedule virtual consultations.
+   - **Get All Virtual Consultations:** Retrieve a list of all virtual consultations.
 
 ## Error Handling
    - **Not Found:** Returns an error if a requested item is not found.
