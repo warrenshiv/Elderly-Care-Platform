@@ -408,6 +408,50 @@ struct VirtualConsultationPayload {
     status: String,
 }
 
+// DietRecord Payload
+#[derive(candid::CandidType, Deserialize, Serialize)]
+struct DietRecordPayload {
+    user_id: u64,
+    meal_type: MealType,
+    food_items: String,
+    calories: u32,
+}
+
+// ExerciseRecommendation Payload
+#[derive(candid::CandidType, Deserialize, Serialize)]
+struct ExerciseRecommendationPayload {
+    user_id: u64,
+    exercise_type: ExerciseType,
+    duration: u32,
+    intensity: Intensity,
+}
+
+// MentalHealthRecord Payload
+#[derive(candid::CandidType, Deserialize, Serialize)]
+struct MentalHealthRecordPayload {
+    user_id: u64,
+    mood: Mood,
+    stress_level: StressLevel,
+    notes: String,
+}
+
+// FitnessChallenge Payload
+#[derive(candid::CandidType, Deserialize, Serialize)]
+struct FitnessChallengePayload {
+    name: String,
+    description: String,
+    start_date: u64,
+    end_date: u64,
+}
+
+// FitnessChallengeParticipant Payload
+#[derive(candid::CandidType, Deserialize, Serialize)]
+struct FitnessChallengeParticipantPayload {
+    challenge_id: u64,
+    user_id: u64,
+    progress: u32,
+}
+
 // Function to create a new user
 #[ic_cdk::update]
 fn create_user(payload: UserPayload) -> Result<User, String> {
