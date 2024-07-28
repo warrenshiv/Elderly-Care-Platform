@@ -668,6 +668,71 @@ fn get_all_virtual_consultations() -> Result<Vec<VirtualConsultation>, String> {
     })
 }
 
+// Function to create a new diet record
+#[ic_cdk::update]
+fn create_diet_record(payload: DietRecordPayload) -> Result<DietRecord, String> {
+    // Ensure all fields are provided
+    if payload.food_items.is_empty() {
+        return Err("All fields must be provided.".to_string());
+    }
+
+    // Ensure user ID exists
+    let user_exists = USERS_STORAGE.with(|storage| storage.borrow().contains_key(&payload.user_id));
+    if !user_exists {
+        return Err("User ID does not exist.".to_string());
+    }
+
+    let id = ID_COUNTER.with(|counter| {
+        let current_value = *counter.borrow().get();
+        counter.borrow_mut().set(current_value + 1)
+    }).expect("Cannot increment ID counter");
+
+    let diet_record = DietRecord {
+        id,
+        user_id: payload.user_id,
+        meal_type: payload.meal_type,
+        food_items: payload.food_items,
+        calories: payload.calories,
+        recorded_at: time(),
+    };
+
+    DIET_RECORDS_STORAGE.with(|storage| storage.borrow_mut().insert(id, diet_record.clone()));
+    Ok(diet_record)
+}
+
+// Function to retrieve diet records by user ID
+#[ic_cdk::query]
+fn get_diet_records_by_user_id(user_id: u64) -> Result<Vec<DietRecord>, String> {
+    DIET_RECORDS_STORAGE.with(|storage| {
+        let stable_btree_map = &*storage.borrow();
+        let records: Vec<DietRecord> = stable_btree_map
+            .iter()
+            .filter(|(_, record)| record.user_id == user_id)
+            .map(|(_, record)| record.clone())
+            .collect();
+        if records.is_empty() {
+            Err("No diet records found.".to_string())
+        } else {
+            Ok(records)
+        }
+    })
+}
+
+// Function to retrieve all diet records
+#[ic_cdk::query]
+fn get_all_diet_records() -> Result<Vec<DietRecord>, String> {
+    DIET_RECORDS_STORAGE.with(|storage| {
+        let stable_btree_map = &*storage.borrow();
+        let records: Vec<DietRecord> = stable_btree_map.iter().map(|(_, record)| record.clone()).collect();
+        if records.is_empty() {
+            Err("No diet records found.".to_string())
+        } else {
+            Ok(records)
+        }
+    })
+}
+
+
 // Error types
 #[derive(candid::CandidType, Deserialize, Serialize)]
 enum Error {
