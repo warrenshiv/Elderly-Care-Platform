@@ -74,6 +74,58 @@ struct VirtualConsultation {
     created_at: u64,
 }
 
+// DietRecord struct
+#[derive(candid::CandidType, Clone, Serialize, Deserialize, Default)]
+struct DietRecord {
+    id: u64,
+    user_id: u64,
+    meal_type: String, // e.g., "Breakfast", "Lunch", "Dinner"
+    food_items: String, // Comma-separated list of food items
+    calories: u32,
+    recorded_at: u64,
+}
+
+// ExerciseRecord struct
+#[derive(candid::CandidType, Clone, Serialize, Deserialize, Default)]
+struct ExerciseRecommendation {
+    id: u64,
+    user_id: u64,
+    exercise_type: String, // e.g., "Cardio", "Strength", "Flexibility"
+    duration: u32, // in minutes
+    intensity: String, // e.g., "Low", "Medium", "High"
+    recommended_at: u64,
+}
+
+// MentalHealthRecord struct
+#[derive(candid::CandidType, Clone, Serialize, Deserialize, Default)]
+struct MentalHealthRecord {
+    id: u64,
+    user_id: u64,
+    mood: String, // e.g., "Happy", "Sad", "Anxious"
+    stress_level: String, // e.g., "Low", "Medium", "High"
+    notes: String, // Any additional notes
+    recorded_at: u64,
+}
+
+#[derive(candid::CandidType, Clone, Serialize, Deserialize, Default)]
+struct FitnessChallenge {
+    id: u64,
+    name: String,
+    description: String,
+    start_date: u64,
+    end_date: u64,
+    created_at: u64,
+}
+
+#[derive(candid::CandidType, Clone, Serialize, Deserialize, Default)]
+struct FitnessChallengeParticipant {
+    id: u64,
+    challenge_id: u64,
+    user_id: u64,
+    progress: u32, // e.g., steps walked, distance covered, etc.
+    updated_at: u64,
+}
+
 impl Storable for User {
     fn to_bytes(&self) -> Cow<[u8]> {
         Cow::Owned(Encode!(self).unwrap())
