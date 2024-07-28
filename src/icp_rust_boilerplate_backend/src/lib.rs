@@ -560,7 +560,7 @@ fn create_medication_reminder(
     {
         return Err("All fields must be provided.".to_string());
     }
-    
+
     // Ensure user ID exists
     let user_exists = USERS_STORAGE.with(|storage| storage.borrow().contains_key(&payload.user_id));
     if !user_exists {
@@ -614,7 +614,7 @@ fn create_virtual_consultation(
     if payload.user_id == 0 || payload.provider_id == 0 || payload.status.is_empty() {
         return Err("All fields must be provided.".to_string());
     }
-    
+
     // Ensure user ID and provider ID exist
     let user_exists = USERS_STORAGE.with(|storage| storage.borrow().contains_key(&payload.user_id));
     if !user_exists {
@@ -682,10 +682,12 @@ fn create_diet_record(payload: DietRecordPayload) -> Result<DietRecord, String> 
         return Err("User ID does not exist.".to_string());
     }
 
-    let id = ID_COUNTER.with(|counter| {
-        let current_value = *counter.borrow().get();
-        counter.borrow_mut().set(current_value + 1)
-    }).expect("Cannot increment ID counter");
+    let id = ID_COUNTER
+        .with(|counter| {
+            let current_value = *counter.borrow().get();
+            counter.borrow_mut().set(current_value + 1)
+        })
+        .expect("Cannot increment ID counter");
 
     let diet_record = DietRecord {
         id,
@@ -723,9 +725,227 @@ fn get_diet_records_by_user_id(user_id: u64) -> Result<Vec<DietRecord>, String> 
 fn get_all_diet_records() -> Result<Vec<DietRecord>, String> {
     DIET_RECORDS_STORAGE.with(|storage| {
         let stable_btree_map = &*storage.borrow();
-        let records: Vec<DietRecord> = stable_btree_map.iter().map(|(_, record)| record.clone()).collect();
+        let records: Vec<DietRecord> = stable_btree_map
+            .iter()
+            .map(|(_, record)| record.clone())
+            .collect();
         if records.is_empty() {
             Err("No diet records found.".to_string())
+        } else {
+            Ok(records)
+        }
+    })
+}
+
+// Function to create a new exercise recommendation
+#[ic_cdk::update]
+fn create_exercise_recommendation(
+    payload: ExerciseRecommendationPayload,
+) -> Result<ExerciseRecommendation, String> {
+    // Ensure all fields are provided
+    if payload.duration == 0 {
+        return Err("All fields must be provided.".to_string());
+    }
+
+    // Ensure user ID exists
+    let user_exists = USERS_STORAGE.with(|storage| storage.borrow().contains_key(&payload.user_id));
+    if !user_exists {
+        return Err("User ID does not exist.".to_string());
+    }
+
+    let id = ID_COUNTER
+        .with(|counter| {
+            let current_value = *counter.borrow().get();
+            counter.borrow_mut().set(current_value + 1)
+        })
+        .expect("Cannot increment ID counter");
+
+    let recommendation = ExerciseRecommendation {
+        id,
+        user_id: payload.user_id,
+        exercise_type: payload.exercise_type,
+        duration: payload.duration,
+        intensity: payload.intensity,
+        recommended_at: time(),
+    };
+
+    EXERCISE_RECOMMENDATIONS_STORAGE
+        .with(|storage| storage.borrow_mut().insert(id, recommendation.clone()));
+    Ok(recommendation)
+}
+
+// Function to retrieve exercise recommendations by user ID
+#[ic_cdk::query]
+fn get_exercise_recommendations_by_user_id(user_id: u64) -> Result<Vec<ExerciseRecommendation>, String> {
+    EXERCISE_RECOMMENDATIONS_STORAGE.with(|storage| {
+        let stable_btree_map = &*storage.borrow();
+        let records: Vec<ExerciseRecommendation> = stable_btree_map
+            .iter()
+            .filter(|(_, record)| record.user_id == user_id)
+            .map(|(_, record)| record.clone())
+            .collect();
+        if records.is_empty() {
+            Err("No exercise recommendations found.".to_string())
+        } else {
+            Ok(records)
+        }
+    })
+}
+
+// Function to retrieve all exercise recommendations
+#[ic_cdk::query]
+fn get_all_exercise_recommendations() -> Result<Vec<ExerciseRecommendation>, String> {
+    EXERCISE_RECOMMENDATIONS_STORAGE.with(|storage| {
+        let stable_btree_map = &*storage.borrow();
+        let records: Vec<ExerciseRecommendation> = stable_btree_map
+            .iter()
+            .map(|(_, record)| record.clone())
+            .collect();
+        if records.is_empty() {
+            Err("No exercise recommendations found.".to_string())
+        } else {
+            Ok(records)
+        }
+    })
+}
+
+// Function to create a new mental health record
+#[ic_cdk::update]
+fn create_mental_health_record(payload: MentalHealthRecordPayload) -> Result<MentalHealthRecord, String> {
+    // Ensure all fields are provided
+    if payload.notes.is_empty() {
+        return Err("All fields must be provided.".to_string());
+    }
+
+    // Ensure user ID exists
+    let user_exists = USERS_STORAGE.with(|storage| storage.borrow().contains_key(&payload.user_id));
+    if !user_exists {
+        return Err("User ID does not exist.".to_string());
+    }
+
+    let id = ID_COUNTER.with(|counter| {
+        let current_value = *counter.borrow().get();
+        counter.borrow_mut().set(current_value + 1)
+    }).expect("Cannot increment ID counter");
+
+    let mental_health_record = MentalHealthRecord {
+        id,
+        user_id: payload.user_id,
+        mood: payload.mood,
+        stress_level: payload.stress_level,
+        notes: payload.notes,
+        recorded_at: time(),
+    };
+
+    MENTAL_HEALTH_RECORDS_STORAGE.with(|storage| storage.borrow_mut().insert(id, mental_health_record.clone()));
+    Ok(mental_health_record)
+}
+
+// Function to retrieve mental health records by user ID
+#[ic_cdk::query]
+fn get_mental_health_records_by_user_id(user_id: u64) -> Result<Vec<MentalHealthRecord>, String> {
+    MENTAL_HEALTH_RECORDS_STORAGE.with(|storage| {
+        let stable_btree_map = &*storage.borrow();
+        let records: Vec<MentalHealthRecord> = stable_btree_map.iter().filter(|(_, record)| record.user_id == user_id).map(|(_, record)| record.clone()).collect();
+        if records.is_empty() {
+            Err("No mental health records found.".to_string())
+        } else {
+            Ok(records)
+        }
+    })
+}
+
+// Function to retrieve all mental health records
+#[ic_cdk::query]
+fn get_all_mental_health_records() -> Result<Vec<MentalHealthRecord>, String> {
+    MENTAL_HEALTH_RECORDS_STORAGE.with(|storage| {
+        let stable_btree_map = &*storage.borrow();
+        let records: Vec<MentalHealthRecord> = stable_btree_map.iter().map(|(_, record)| record.clone()).collect();
+        if records.is_empty() {
+            Err("No mental health records found.".to_string())
+        } else {
+            Ok(records)
+        }
+    })
+}
+
+// Function to create a new fitness challenge
+#[ic_cdk::update]
+fn create_fitness_challenge(payload: FitnessChallengePayload) -> Result<FitnessChallenge, String> {
+    if payload.name.is_empty() || payload.description.is_empty() {
+        return Err("Name and description cannot be empty".to_string());
+    }
+
+    let id = ID_COUNTER.with(|counter| {
+        let current_value = *counter.borrow().get();
+        counter.borrow_mut().set(current_value + 1)
+    }).expect("Cannot increment ID counter");
+
+    let challenge = FitnessChallenge {
+        id,
+        name: payload.name,
+        description: payload.description,
+        start_date: payload.start_date,
+        end_date: payload.end_date,
+        created_at: time(),
+    };
+
+    FITNESS_CHALLENGES_STORAGE.with(|storage| storage.borrow_mut().insert(id, challenge.clone()));
+    Ok(challenge)
+}
+
+// Function to create a new fitness challenge participant
+#[ic_cdk::update]
+fn create_fitness_challenge_participant(payload: FitnessChallengeParticipantPayload) -> Result<FitnessChallengeParticipant, String> {
+    let challenge_exists = FITNESS_CHALLENGES_STORAGE.with(|storage| storage.borrow().contains_key(&payload.challenge_id));
+    if !challenge_exists {
+        return Err("Challenge ID does not exist.".to_string());
+    }
+
+    let user_exists = USERS_STORAGE.with(|storage| storage.borrow().contains_key(&payload.user_id));
+    if !user_exists {
+        return Err("User ID does not exist.".to_string());
+    }
+
+    let id = ID_COUNTER.with(|counter| {
+        let current_value = *counter.borrow().get();
+        counter.borrow_mut().set(current_value + 1)
+    }).expect("Cannot increment ID counter");
+
+    let participant = FitnessChallengeParticipant {
+        id,
+        challenge_id: payload.challenge_id,
+        user_id: payload.user_id,
+        progress: payload.progress,
+        updated_at: time(),
+    };
+
+    FITNESS_CHALLENGE_PARTICIPANTS_STORAGE.with(|storage| storage.borrow_mut().insert(id, participant.clone()));
+    Ok(participant)
+}
+
+// Function to retrieve all fitness challenges
+#[ic_cdk::query]
+fn get_all_fitness_challenges() -> Result<Vec<FitnessChallenge>, String> {
+    FITNESS_CHALLENGES_STORAGE.with(|storage| {
+        let stable_btree_map = &*storage.borrow();
+        let records: Vec<FitnessChallenge> = stable_btree_map.iter().map(|(_, record)| record.clone()).collect();
+        if records.is_empty() {
+            Err("No fitness challenges found.".to_string())
+        } else {
+            Ok(records)
+        }
+    })
+}
+
+// Function to retrieve all fitness challenge participants
+#[ic_cdk::query]
+fn get_all_fitness_challenge_participants() -> Result<Vec<FitnessChallengeParticipant>, String> {
+    FITNESS_CHALLENGE_PARTICIPANTS_STORAGE.with(|storage| {
+        let stable_btree_map = &*storage.borrow();
+        let records: Vec<FitnessChallengeParticipant> = stable_btree_map.iter().map(|(_, record)| record.clone()).collect();
+        if records.is_empty() {
+            Err("No fitness challenge participants found.".to_string())
         } else {
             Ok(records)
         }

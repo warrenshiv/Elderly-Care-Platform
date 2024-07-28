@@ -1,3 +1,58 @@
+type DietRecord = record {
+  id : nat64;
+  calories : nat32;
+  meal_type : MealType;
+  user_id : nat64;
+  recorded_at : nat64;
+  food_items : text;
+};
+type DietRecordPayload = record {
+  calories : nat32;
+  meal_type : MealType;
+  user_id : nat64;
+  food_items : text;
+};
+type ExerciseRecommendation = record {
+  id : nat64;
+  recommended_at : nat64;
+  duration : nat32;
+  user_id : nat64;
+  exercise_type : ExerciseType;
+  intensity : Intensity;
+};
+type ExerciseRecommendationPayload = record {
+  duration : nat32;
+  user_id : nat64;
+  exercise_type : ExerciseType;
+  intensity : Intensity;
+};
+type ExerciseType = variant { Flexibility; Strength; Cardio };
+type FitnessChallenge = record {
+  id : nat64;
+  name : text;
+  description : text;
+  end_date : nat64;
+  created_at : nat64;
+  start_date : nat64;
+};
+type FitnessChallengeParticipant = record {
+  id : nat64;
+  updated_at : nat64;
+  user_id : nat64;
+  progress : nat32;
+  challenge_id : nat64;
+};
+type FitnessChallengeParticipantPayload = record {
+  user_id : nat64;
+  progress : nat32;
+  challenge_id : nat64;
+};
+type FitnessChallengePayload = record {
+  name : text;
+  description : text;
+  end_date : nat64;
+  start_date : nat64;
+};
 type HealthRecord = record {
   id : nat64;
   status : HealthStatus;
@@ -15,6 +70,8 @@ type HealthRecordPayload = record {
   heart_rate : nat8;
 };
 type HealthStatus = variant { Stable; Critical };
+type Intensity = variant { Low; High; Medium };
+type MealType = variant { Lunch; Breakfast; Dinner };
 type MedicationReminder = record {
   id : nat64;
   medication_name : text;
@@ -29,14 +86,39 @@ type MedicationReminderPayload = record {
   user_id : nat64;
   schedule : text;
 };
-type Result = variant { Ok : HealthRecord; Err : text };
-type Result_1 = variant { Ok : MedicationReminder; Err : text };
-type Result_2 = variant { Ok : User; Err : text };
-type Result_3 = variant { Ok : VirtualConsultation; Err : text };
-type Result_4 = variant { Ok : vec HealthRecord; Err : text };
-type Result_5 = variant { Ok : vec MedicationReminder; Err : text };
-type Result_6 = variant { Ok : vec User; Err : text };
-type Result_7 = variant { Ok : vec VirtualConsultation; Err : text };
+type MentalHealthRecord = record {
+  id : nat64;
+  mood : Mood;
+  user_id : nat64;
+  recorded_at : nat64;
+  stress_level : Intensity;
+  notes : text;
+};
+type MentalHealthRecordPayload = record {
+  mood : Mood;
+  user_id : nat64;
+  stress_level : Intensity;
+  notes : text;
+};
+type Mood = variant { Sad; Happy; Anxious };
+type Result = variant { Ok : DietRecord; Err : text };
+type Result_1 = variant { Ok : ExerciseRecommendation; Err : text };
+type Result_10 = variant { Ok : vec ExerciseRecommendation; Err : text };
+type Result_11 = variant { Ok : vec FitnessChallengeParticipant; Err : text };
+type Result_12 = variant { Ok : vec FitnessChallenge; Err : text };
+type Result_13 = variant { Ok : vec HealthRecord; Err : text };
+type Result_14 = variant { Ok : vec MedicationReminder; Err : text };
+type Result_15 = variant { Ok : vec MentalHealthRecord; Err : text };
+type Result_16 = variant { Ok : vec User; Err : text };
+type Result_17 = variant { Ok : vec VirtualConsultation; Err : text };
+type Result_2 = variant { Ok : FitnessChallenge; Err : text };
+type Result_3 = variant { Ok : FitnessChallengeParticipant; Err : text };
+type Result_4 = variant { Ok : HealthRecord; Err : text };
+type Result_5 = variant { Ok : MedicationReminder; Err : text };
+type Result_6 = variant { Ok : MentalHealthRecord; Err : text };
+type Result_7 = variant { Ok : User; Err : text };
+type Result_8 = variant { Ok : VirtualConsultation; Err : text };
+type Result_9 = variant { Ok : vec DietRecord; Err : text };
 type User = record {
   id : nat64;
   user_type : UserType;
@@ -61,12 +143,29 @@ type VirtualConsultationPayload = record {
   scheduled_at : nat64;
 };
 service : {
-  create_health_record : (HealthRecordPayload) -> (Result);
-  create_medication_reminder : (MedicationReminderPayload) -> (Result_1);
-  create_user : (UserPayload) -> (Result_2);
-  create_virtual_consultation : (VirtualConsultationPayload) -> (Result_3);
-  get_all_health_records : () -> (Result_4) query;
-  get_all_medication_reminders : () -> (Result_5) query;
-  get_all_users : () -> (Result_6) query;
-  get_all_virtual_consultations : () -> (Result_7) query;
+  create_diet_record : (DietRecordPayload) -> (Result);
+  create_exercise_recommendation : (ExerciseRecommendationPayload) -> (
+      Result_1,
+    );
+  create_fitness_challenge : (FitnessChallengePayload) -> (Result_2);
+  create_fitness_challenge_participant : (
+      FitnessChallengeParticipantPayload,
+    ) -> (Result_3);
+  create_health_record : (HealthRecordPayload) -> (Result_4);
+  create_medication_reminder : (MedicationReminderPayload) -> (Result_5);
+  create_mental_health_record : (MentalHealthRecordPayload) -> (Result_6);
+  create_user : (UserPayload) -> (Result_7);
+  create_virtual_consultation : (VirtualConsultationPayload) -> (Result_8);
+  get_all_diet_records : () -> (Result_9) query;
+  get_all_exercise_recommendations : () -> (Result_10) query;
+  get_all_fitness_challenge_participants : () -> (Result_11) query;
+  get_all_fitness_challenges : () -> (Result_12) query;
+  get_all_health_records : () -> (Result_13) query;
+  get_all_medication_reminders : () -> (Result_14) query;
+  get_all_mental_health_records : () -> (Result_15) query;
+  get_all_users : () -> (Result_16) query;
+  get_all_virtual_consultations : () -> (Result_17) query;
+  get_diet_records_by_user_id : (nat64) -> (Result_9) query;
+  get_exercise_recommendations_by_user_id : (nat64) -> (Result_10) query;
+  get_mental_health_records_by_user_id : (nat64) -> (Result_15) query;
 }
