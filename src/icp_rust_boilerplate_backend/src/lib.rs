@@ -30,6 +30,61 @@ enum HealthStatus {
     Critical,
 }
 
+// MealType enum
+#[derive(
+    candid::CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Default, Debug,
+)]
+enum MealType {
+    #[default]
+    Breakfast,
+    Lunch,
+    Dinner,
+}
+
+// ExerciseType enum
+#[derive(
+    candid::CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Default, Debug,
+)]
+enum ExerciseType {
+    #[default]
+    Cardio,
+    Strength,
+    Flexibility,
+}
+
+// Intensity enum
+#[derive(
+    candid::CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Default, Debug,
+)]
+enum Intensity {
+    #[default]
+    Low,
+    Medium,
+    High,
+}
+
+// Mood enum
+#[derive(
+    candid::CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Default, Debug,
+)]
+enum Mood {
+    #[default]
+    Happy,
+    Sad,
+    Anxious,
+}
+
+// StressLevel enum
+#[derive(
+    candid::CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Hash, Default, Debug,
+)]
+enum StressLevel {
+    #[default]
+    Low,
+    Medium,
+    High,
+}
+
 // User struct
 #[derive(candid::CandidType, Clone, Serialize, Deserialize, Default)]
 struct User {
@@ -79,7 +134,7 @@ struct VirtualConsultation {
 struct DietRecord {
     id: u64,
     user_id: u64,
-    meal_type: String, // e.g., "Breakfast", "Lunch", "Dinner"
+    meal_type: MealType,
     food_items: String, // Comma-separated list of food items
     calories: u32,
     recorded_at: u64,
@@ -90,9 +145,9 @@ struct DietRecord {
 struct ExerciseRecommendation {
     id: u64,
     user_id: u64,
-    exercise_type: String, // e.g., "Cardio", "Strength", "Flexibility"
+    exercise_type: ExerciseType,
     duration: u32, // in minutes
-    intensity: String, // e.g., "Low", "Medium", "High"
+    intensity: Intensity,
     recommended_at: u64,
 }
 
@@ -101,8 +156,8 @@ struct ExerciseRecommendation {
 struct MentalHealthRecord {
     id: u64,
     user_id: u64,
-    mood: String, // e.g., "Happy", "Sad", "Anxious"
-    stress_level: String, // e.g., "Low", "Medium", "High"
+    mood: Mood,
+    stress_level: StressLevel,
     notes: String, // Any additional notes
     recorded_at: u64,
 }
@@ -186,6 +241,81 @@ impl BoundedStorable for VirtualConsultation {
     const IS_FIXED_SIZE: bool = false;
 }
 
+impl Storable for DietRecord {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        Cow::Owned(Encode!(self).unwrap())
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        Decode!(bytes.as_ref(), Self).unwrap()
+    }
+}
+
+impl BoundedStorable for DietRecord {
+    const MAX_SIZE: u32 = 512;
+    const IS_FIXED_SIZE: bool = false;
+}
+
+impl Storable for ExerciseRecommendation {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        Cow::Owned(Encode!(self).unwrap())
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        Decode!(bytes.as_ref(), Self).unwrap()
+    }
+}
+
+impl BoundedStorable for ExerciseRecommendation {
+    const MAX_SIZE: u32 = 512;
+    const IS_FIXED_SIZE: bool = false;
+}
+
+impl Storable for MentalHealthRecord {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        Cow::Owned(Encode!(self).unwrap())
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        Decode!(bytes.as_ref(), Self).unwrap()
+    }
+}
+
+impl BoundedStorable for MentalHealthRecord {
+    const MAX_SIZE: u32 = 512;
+    const IS_FIXED_SIZE: bool = false;
+}
+
+impl Storable for FitnessChallenge {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        Cow::Owned(Encode!(self).unwrap())
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        Decode!(bytes.as_ref(), Self).unwrap()
+    }
+}
+
+impl BoundedStorable for FitnessChallenge {
+    const MAX_SIZE: u32 = 512;
+    const IS_FIXED_SIZE: bool = false;
+}
+
+impl Storable for FitnessChallengeParticipant {
+    fn to_bytes(&self) -> Cow<[u8]> {
+        Cow::Owned(Encode!(self).unwrap())
+    }
+
+    fn from_bytes(bytes: Cow<[u8]>) -> Self {
+        Decode!(bytes.as_ref(), Self).unwrap()
+    }
+}
+
+impl BoundedStorable for FitnessChallengeParticipant {
+    const MAX_SIZE: u32 = 512;
+    const IS_FIXED_SIZE: bool = false;
+}
+
 thread_local! {
     static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> = RefCell::new(
         MemoryManager::init(DefaultMemoryImpl::default())
@@ -214,6 +344,31 @@ thread_local! {
     static VIRTUAL_CONSULTATIONS_STORAGE: RefCell<StableBTreeMap<u64, VirtualConsultation, Memory>> =
         RefCell::new(StableBTreeMap::init(
             MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(4)))
+    ));
+
+    static DIET_RECORDS_STORAGE: RefCell<StableBTreeMap<u64, DietRecord, Memory>> =
+        RefCell::new(StableBTreeMap::init(
+            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(5)))
+    ));
+
+    static EXERCISE_RECOMMENDATIONS_STORAGE: RefCell<StableBTreeMap<u64, ExerciseRecommendation, Memory>> =
+        RefCell::new(StableBTreeMap::init(
+            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(6)))
+    ));
+
+    static MENTAL_HEALTH_RECORDS_STORAGE: RefCell<StableBTreeMap<u64, MentalHealthRecord, Memory>> =
+        RefCell::new(StableBTreeMap::init(
+            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(7)))
+    ));
+
+    static FITNESS_CHALLENGES_STORAGE: RefCell<StableBTreeMap<u64, FitnessChallenge, Memory>> =
+        RefCell::new(StableBTreeMap::init(
+            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(8)))
+    ));
+
+    static FITNESS_CHALLENGE_PARTICIPANTS_STORAGE: RefCell<StableBTreeMap<u64, FitnessChallengeParticipant, Memory>> =
+        RefCell::new(StableBTreeMap::init(
+            MEMORY_MANAGER.with(|m| m.borrow().get(MemoryId::new(9)))
     ));
 }
 
